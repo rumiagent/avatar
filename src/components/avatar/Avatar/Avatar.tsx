@@ -16,7 +16,7 @@
  */
 
 import { useEffect, useRef } from 'react'
-import AvatarIllustration from './AvatarIllustration'
+import { AvatarIllustration } from '../AvatarIllustration'
 
 export interface AvatarProps {
   /** When true, the speaking animation plays; idle otherwise. */
