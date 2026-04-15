@@ -108,7 +108,7 @@ export function ChatPanel({ isSpeaking, onSpeak, className = '' }: ChatPanelProp
     } finally {
       setIsTyping(false)
     }
-  }, [inputValue, isBlocked, onSpeak])
+  }, [inputValue, isBlocked, onSpeak, getResponse])
 
   /** Handle Enter key in the text input (Shift+Enter is a passthrough). */
   const handleKeyDown = useCallback(
