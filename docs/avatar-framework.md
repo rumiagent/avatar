@@ -21,20 +21,21 @@ The avatar component needs to render a stylish, high-fidelity 2-D animated chara
 
 ### 2.1 Rive (`@rive-app/react-canvas`)
 
-| Attribute | Detail |
-|-----------|--------|
-| Licence | MIT (runtime) |
-| npm package | `@rive-app/react-canvas@4.28.0` |
-| Core runtime size | ~300 KB gzip (WASM + JS, served via CDN) |
-| State machine | ✅ Built-in, first-class |
-| Idle → Speaking transition | ✅ Via state machine triggers/inputs |
-| Lip sync | ✅ Float inputs map directly to mouth-open amplitude |
-| Free assets | ✅ [Rive Community](https://rive.app/community/) — many free character files |
-| React integration | ✅ Official `useRive` hook + `<RiveComponent>` |
+| Attribute                  | Detail                                                                       |
+| -------------------------- | ---------------------------------------------------------------------------- |
+| Licence                    | MIT (runtime)                                                                |
+| npm package                | `@rive-app/react-canvas@4.28.0`                                              |
+| Core runtime size          | ~300 KB gzip (WASM + JS, served via CDN)                                     |
+| State machine              | ✅ Built-in, first-class                                                     |
+| Idle → Speaking transition | ✅ Via state machine triggers/inputs                                         |
+| Lip sync                   | ✅ Float inputs map directly to mouth-open amplitude                         |
+| Free assets                | ✅ [Rive Community](https://rive.app/community/) — many free character files |
+| React integration          | ✅ Official `useRive` hook + `<RiveComponent>`                               |
 
 **How it works:** A `.riv` file bundles the artboard, animations, and state machine. The web app drives the state machine by setting boolean/number inputs (e.g., `isSpeaking`, `mouthOpen`). Transitions between states are interpolated by the Rive runtime — no custom animation code required.
 
 **Spike findings:**
+
 - The React hook (`useRive`) gives synchronous access to `StateMachineInput` objects.
 - Audio amplitude from the Web Audio API `AnalyserNode` maps cleanly to a `mouthOpen` float input (0–1).
 - The Rive editor (web-based, free) allows creating `.riv` files from scratch, and the community library has suitable starting characters.
@@ -44,19 +45,20 @@ The avatar component needs to render a stylish, high-fidelity 2-D animated chara
 
 ### 2.2 Lottie / dotLottie (`lottie-react` / `@dotlottie/react-player`)
 
-| Attribute | Detail |
-|-----------|--------|
-| Licence | MIT |
-| npm (lottie-react) | `2.4.1` (wraps `lottie-web`) |
-| npm (dotLottie) | `@dotlottie/react-player@1.6.19` |
-| Core runtime size | ~234 KB gzip (lottie-web) |
-| State machine | ❌ No native state machine; transitions require manual segment management |
-| Idle → Speaking transition | ⚠️ Possible by switching animation segments, but awkward |
-| Lip sync | ❌ No built-in; would require frame-scrubbing hacks |
-| Free assets | ✅ Large LottieFiles library |
+| Attribute                  | Detail                                                                    |
+| -------------------------- | ------------------------------------------------------------------------- |
+| Licence                    | MIT                                                                       |
+| npm (lottie-react)         | `2.4.1` (wraps `lottie-web`)                                              |
+| npm (dotLottie)            | `@dotlottie/react-player@1.6.19`                                          |
+| Core runtime size          | ~234 KB gzip (lottie-web)                                                 |
+| State machine              | ❌ No native state machine; transitions require manual segment management |
+| Idle → Speaking transition | ⚠️ Possible by switching animation segments, but awkward                  |
+| Lip sync                   | ❌ No built-in; would require frame-scrubbing hacks                       |
+| Free assets                | ✅ Large LottieFiles library                                              |
 
 **Spike findings:**
-- Lottie is excellent for *playback* of pre-baked animations exported from AfterEffects.
+
+- Lottie is excellent for _playback_ of pre-baked animations exported from AfterEffects.
 - Transitioning between idle and speaking states requires manually seeking to different frame ranges or swapping animation instances — there is no state machine concept.
 - Lip sync via real-time audio amplitude is not supported; the only option is pre-rendered phoneme animations or scrubbing frames, which produces unnatural results.
 - dotLottie adds a slightly smaller binary format and interactive features, but the state machine API remains immature compared to Rive.
@@ -67,12 +69,12 @@ The avatar component needs to render a stylish, high-fidelity 2-D animated chara
 
 ### 2.3 Spine
 
-| Attribute | Detail |
-|-----------|--------|
-| Licence | Commercial ($$) |
-| State machine | ✅ Full |
-| Lip sync | ✅ Excellent |
-| Bundle | ~500 KB+ |
+| Attribute     | Detail          |
+| ------------- | --------------- |
+| Licence       | Commercial ($$) |
+| State machine | ✅ Full         |
+| Lip sync      | ✅ Excellent    |
+| Bundle        | ~500 KB+        |
 
 **Conclusion:** Excellent technology but requires a paid Spine Editor licence (starts at $99) and a per-title runtime licence for web. Overkill and cost-prohibitive for this project.
 
@@ -96,15 +98,15 @@ A 3-D avatar rendered via WebGL.
 
 ## 3. Decision Matrix
 
-| Criterion | Weight | Rive | Lottie | Spine | CSS/SVG |
-|-----------|--------|------|--------|-------|---------|
-| Idle loop | 20% | ✅ 5 | ✅ 5 | ✅ 5 | ✅ 4 |
-| Speaking transition (state machine) | 25% | ✅ 5 | ⚠️ 2 | ✅ 5 | ❌ 1 |
-| Real-time lip sync | 25% | ✅ 5 | ❌ 1 | ✅ 5 | ❌ 1 |
-| Bundle size | 15% | ✅ 4 | ✅ 5 | ⚠️ 3 | ✅ 5 |
-| Free / open assets | 10% | ✅ 5 | ✅ 4 | ⚠️ 2 | ✅ 3 |
-| Licence cost | 5% | ✅ 5 | ✅ 5 | ❌ 1 | ✅ 5 |
-| **Weighted score** | | **4.8** | **3.1** | **3.9** | **2.6** |
+| Criterion                           | Weight | Rive    | Lottie  | Spine   | CSS/SVG |
+| ----------------------------------- | ------ | ------- | ------- | ------- | ------- |
+| Idle loop                           | 20%    | ✅ 5    | ✅ 5    | ✅ 5    | ✅ 4    |
+| Speaking transition (state machine) | 25%    | ✅ 5    | ⚠️ 2    | ✅ 5    | ❌ 1    |
+| Real-time lip sync                  | 25%    | ✅ 5    | ❌ 1    | ✅ 5    | ❌ 1    |
+| Bundle size                         | 15%    | ✅ 4    | ✅ 5    | ⚠️ 3    | ✅ 5    |
+| Free / open assets                  | 10%    | ✅ 5    | ✅ 4    | ⚠️ 2    | ✅ 3    |
+| Licence cost                        | 5%     | ✅ 5    | ✅ 5    | ❌ 1    | ✅ 5    |
+| **Weighted score**                  |        | **4.8** | **3.1** | **3.9** | **2.6** |
 
 ---
 
@@ -145,10 +147,10 @@ src/
 
 ### State machine inputs
 
-| Input name | Type | Description |
-|---|---|---|
-| `isSpeaking` | Boolean | Triggers idle ↔ speaking state transition |
-| `mouthOpen` | Number (0–1) | Drives mouth-open blend driven by audio amplitude |
+| Input name   | Type         | Description                                       |
+| ------------ | ------------ | ------------------------------------------------- |
+| `isSpeaking` | Boolean      | Triggers idle ↔ speaking state transition         |
+| `mouthOpen`  | Number (0–1) | Drives mouth-open blend driven by audio amplitude |
 
 ### NPM package added
 

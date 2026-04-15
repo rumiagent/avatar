@@ -61,19 +61,13 @@ describe('AvatarCanvas', () => {
   })
 
   it('renders the Rive canvas without crashing', () => {
-    const { getByTestId } = render(
-      <AvatarCanvas src="/avatar.riv" stateMachine="AvatarSM" />,
-    )
+    const { getByTestId } = render(<AvatarCanvas src="/avatar.riv" stateMachine="AvatarSM" />)
     expect(getByTestId('rive-canvas')).toBeTruthy()
   })
 
   it('applies an accessible aria-label to the wrapper', () => {
     const { getByRole } = render(
-      <AvatarCanvas
-        src="/avatar.riv"
-        stateMachine="AvatarSM"
-        ariaLabel="AI assistant avatar"
-      />,
+      <AvatarCanvas src="/avatar.riv" stateMachine="AvatarSM" ariaLabel="AI assistant avatar" />,
     )
     expect(getByRole('img', { name: 'AI assistant avatar' })).toBeTruthy()
   })
@@ -119,11 +113,7 @@ describe('AvatarCanvas', () => {
 
   it('applies a custom className to the wrapper div', () => {
     const { container } = render(
-      <AvatarCanvas
-        src="/avatar.riv"
-        stateMachine="AvatarSM"
-        className="w-64 h-64"
-      />,
+      <AvatarCanvas src="/avatar.riv" stateMachine="AvatarSM" className="h-64 w-64" />,
     )
     const wrapper = container.firstChild as HTMLElement
     expect(wrapper.className).toContain('w-64')
