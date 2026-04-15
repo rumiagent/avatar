@@ -69,52 +69,64 @@ export function Avatar({
       className={[
         // Fixed height: exactly half the viewport
         'relative flex h-[50vh] w-full items-end justify-center overflow-hidden',
-        // Dark styled background with a hint of deep purple
-        'bg-gradient-to-b from-gray-950 via-[#120e1e] to-[#1a1428]',
+        // Deep dark background — near-black through midnight blue
+        'bg-gradient-to-b from-surface-base via-[#0d0d20] to-[#13102a]',
         className,
       ]
         .filter(Boolean)
         .join(' ')}
     >
-      {/* Radial ambient glow — intensifies while speaking */}
+      {/* ── Background vignette overlay for depth ── */}
+      <div aria-hidden="true" className="vignette pointer-events-none absolute inset-0 z-0" />
+
+      {/* ── Radial ambient glow — intensifies while speaking ── */}
       <div
         aria-hidden="true"
         className={[
-          'pointer-events-none absolute inset-0 transition-opacity duration-500',
-          isSpeaking ? 'opacity-100' : 'opacity-60',
+          'pointer-events-none absolute inset-0 z-0 transition-opacity duration-500',
+          isSpeaking ? 'opacity-100' : 'opacity-50',
         ].join(' ')}
         style={{
           background:
-            'radial-gradient(ellipse 70% 60% at 50% 80%, rgba(167,139,250,0.18) 0%, rgba(99,102,241,0.08) 60%, transparent 100%)',
+            'radial-gradient(ellipse 72% 65% at 50% 85%, rgba(167,139,250,0.22) 0%, rgba(99,102,241,0.10) 55%, transparent 100%)',
         }}
       />
 
-      {/* Speaking indicator ring — glows around avatar while speaking */}
+      {/* ── Speaking-state glow ring ── */}
+      {/*
+       * A large rounded-full outline that surrounds the avatar figure.
+       * CSS box-shadow animation (speakingRing) pulses intensity when active.
+       * Transitions from invisible (opacity-0) to visible with a smooth fade.
+       */}
       <div
         aria-hidden="true"
         className={[
-          'absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full transition-all duration-500',
+          'pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full',
+          'transition-all duration-500',
           isSpeaking
-            ? 'h-[46vh] w-[min(90vw,46vh)] opacity-100 shadow-glow-lg'
+            ? 'h-[48vh] w-[min(92vw,48vh)] animate-speaking-ring opacity-100'
             : 'h-[44vh] w-[min(86vw,44vh)] opacity-0',
         ].join(' ')}
+        style={{
+          boxShadow: isSpeaking ? '0 0 40px 10px rgba(167, 139, 250, 0.40)' : '0 0 0 0 transparent',
+        }}
       />
 
-      {/* Avatar illustration container */}
+      {/* ── Avatar illustration container ── */}
       <div
         ref={containerRef}
         data-testid="avatar-illustration-container"
         className={[
           'relative z-10 flex h-full w-full max-w-sm items-end justify-center',
           'transition-all duration-500 ease-in-out',
-          // Slight scale-up when speaking for presence
+          // Subtle scale-up when speaking adds perceptual presence
           isSpeaking ? 'scale-[1.02]' : 'scale-100',
         ].join(' ')}
       >
         <AvatarIllustration isSpeaking={isSpeaking} className="h-full w-full" />
       </div>
 
-      {/* Status label — visually hidden, accessible */}
+      {/* ── Status label — visually hidden, accessible ── */}
       <p className="sr-only" aria-live="polite">
         {isSpeaking ? 'Avatar is speaking' : 'Avatar is idle'}
       </p>
