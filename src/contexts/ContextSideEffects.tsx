@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * ContextSideEffects — dependency-injection context for all side effects.
  *
@@ -21,28 +22,16 @@
 
 import { createContext } from 'react'
 
-import type { GetInitialGreeting } from '@/sideEffects/getInitialGreeting'
-import type { GetResponse } from '@/sideEffects/getResponse'
-import { getInitialGreetingProd } from '@/sideEffects/getInitialGreeting.prod'
-import { getResponseProd } from '@/sideEffects/getResponse.prod'
+import { defaultSideEffects } from './defaultSideEffects'
 
-/** Shape of all injectable side effects. */
-export interface SideEffects {
-  getInitialGreeting: GetInitialGreeting
-  getResponse: GetResponse
-}
-
-/** Default side effects wired to production implementations. */
-export const defaultSideEffects: SideEffects = {
-  getInitialGreeting: getInitialGreetingProd,
-  getResponse: getResponseProd,
-}
+export type { SideEffects } from './defaultSideEffects'
+export { defaultSideEffects } from './defaultSideEffects'
 
 /**
  * React context carrying the current side-effect implementations.
  * Defaults to production so wrapping in a provider is optional at the app level.
  */
-export const ContextSideEffects = createContext<SideEffects>(defaultSideEffects)
+export const ContextSideEffects = createContext(defaultSideEffects)
 
 /**
  * Convenience alias for the context provider.
