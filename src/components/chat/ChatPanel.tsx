@@ -16,8 +16,8 @@
  *   or while a response is being awaited (`isTyping=true`).
  * • The feed auto-scrolls to the latest entry on every state change.
  *
- * No backend calls — all data flows through the intent-aware mock engine
- * (`src/mocks/conversation.ts`).
+ * Side effects (greeting, response) are injected via `ContextSideEffects`
+ * so that Storybook stories and tests can swap implementations freely.
  *
  * @example
  *   <ChatPanel
@@ -27,8 +27,8 @@
  *   />
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { getInitialGreeting, getResponse } from '@/mocks/conversation'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { ContextSideEffects } from '@/contexts/ContextSideEffects'
 import MessageBubble from './MessageBubble'
 import TypingIndicator from './TypingIndicator'
 
@@ -59,6 +59,8 @@ function nextId(): number {
 }
 
 export function ChatPanel({ isSpeaking, onSpeak, className = '' }: ChatPanelProps) {
+  const { getInitialGreeting, getResponse } = useContext(ContextSideEffects)
+
   const [messages, setMessages] = useState<Message[]>(() => [
     { id: nextId(), role: 'avatar', text: getInitialGreeting() },
   ])
@@ -106,7 +108,7 @@ export function ChatPanel({ isSpeaking, onSpeak, className = '' }: ChatPanelProp
     } finally {
       setIsTyping(false)
     }
-  }, [inputValue, isBlocked, onSpeak])
+  }, [inputValue, isBlocked, onSpeak, getResponse])
 
   /** Handle Enter key in the text input (Shift+Enter is a passthrough). */
   const handleKeyDown = useCallback(
