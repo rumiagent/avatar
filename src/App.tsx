@@ -9,14 +9,35 @@
  *   • `isSpeaking` state is the single source of truth wired to both panels:
  *       – Avatar panel: triggers speaking animation + glow intensification
  *       – Chat panel: styles the speak-toggle button
+ *
+ * TTS integration:
+ *   • `useTTS` drives the avatar's speaking animation via its `isSpeaking` flag.
+ *   • Pressing "Speak" reads the last avatar demo message aloud; pressing "Stop"
+ *     cancels synthesis immediately.
+ *   • When `speechSynthesis` is unavailable the button still toggles the visual
+ *     animation so the UI remains functional as a demo.
  */
 
-import { useState } from 'react'
 import Avatar from '@/components/avatar/Avatar'
 import ChatPanel from '@/components/chat/ChatPanel'
+import { useTTS } from '@/hooks/useTTS'
+
+/** Last avatar message — spoken when the user presses the Speak button. */
+const DEMO_SPEAK_TEXT =
+  "Every conversation is a small light. I'm glad we have this one. " +
+  "I'm your AI companion — calm, attentive, and always present. " +
+  "Hello! I'm here whenever you're ready to talk."
 
 function App() {
-  const [isSpeaking, setIsSpeaking] = useState(false)
+  const { speak, stop, isSpeaking } = useTTS()
+
+  const handleToggleSpeaking = () => {
+    if (isSpeaking) {
+      stop()
+    } else {
+      speak(DEMO_SPEAK_TEXT)
+    }
+  }
 
   return (
     /*
@@ -31,7 +52,7 @@ function App() {
       {/* ── Bottom 50 %: Chat panel ── */}
       <ChatPanel
         isSpeaking={isSpeaking}
-        onToggleSpeaking={() => setIsSpeaking((s) => !s)}
+        onToggleSpeaking={handleToggleSpeaking}
         className="h-[50vh] flex-shrink-0"
       />
     </div>
