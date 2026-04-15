@@ -10,14 +10,14 @@
  * ---------
  * • User types in the input and presses Enter or the send button.
  * • The message is appended to the feed; a typing indicator appears.
- * • The mock conversation engine resolves with a response (~0.8 – 2 s).
+ * • The intent-aware conversation engine resolves with a response (~0.8 – 1.5 s).
  * • The response is added to the feed and `onSpeak` is called so TTS begins.
  * • The input is disabled while the avatar is speaking (`isSpeaking=true`)
  *   or while a response is being awaited (`isTyping=true`).
  * • The feed auto-scrolls to the latest entry on every state change.
  *
- * No backend calls — all data flows through the mock engine
- * (`src/mocks/conversationEngine.ts`).
+ * No backend calls — all data flows through the intent-aware mock engine
+ * (`src/mocks/conversation.ts`).
  *
  * @example
  *   <ChatPanel
@@ -28,7 +28,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { getInitialGreeting, getMockResponse } from '@/mocks/conversationEngine'
+import { getInitialGreeting, getResponse } from '@/mocks/conversation'
 import MessageBubble from './MessageBubble'
 import TypingIndicator from './TypingIndicator'
 
@@ -96,7 +96,7 @@ export function ChatPanel({ isSpeaking, onSpeak, className = '' }: ChatPanelProp
     setIsTyping(true)
 
     try {
-      const response = await getMockResponse(text)
+      const response = await getResponse(text)
 
       // 3. Append avatar response.
       setMessages((prev) => [...prev, { id: nextId(), role: 'avatar', text: response }])
