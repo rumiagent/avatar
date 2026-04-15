@@ -32,6 +32,15 @@
  *   const opener = getAmbientMessage()
  */
 
+// ── Initial greeting ─────────────────────────────────────────────────────────
+
+/**
+ * First message the avatar shows on load.
+ * Welcoming and unhurried — sets the conversational tone.
+ */
+export const INITIAL_GREETING =
+  "Hello there. I'm glad you're here. What's on your mind today?"
+
 // ── Delay constants ──────────────────────────────────────────────────────────
 
 /** Minimum simulated "thinking" delay in milliseconds. */
@@ -277,6 +286,14 @@ export function detectIntent(message: string): Intent {
 }
 
 // ── Public API ───────────────────────────────────────────────────────────────
+
+/**
+ * Returns the opening greeting shown in the chat feed on first load.
+ * Deterministic — always the same string (no randomness needed here).
+ */
+export function getInitialGreeting(): string {
+  return INITIAL_GREETING
+}
 
 /**
  * Simulates the avatar "thinking" and returns a context-aware response.

@@ -2,7 +2,7 @@
  * Unit tests for ChatPanel.
  *
  * Strategy:
- *   - Mock the conversation engine so async behaviour is deterministic.
+ *   - Mock the intent-aware conversation engine so async behaviour is deterministic.
  *   - Verify structural regions: divider, message feed, input bar, send button.
  *   - Verify initial greeting from the mock engine is rendered on mount.
  *   - Verify message submission via Enter key and send-button click.
@@ -22,9 +22,9 @@ import ChatPanel from './ChatPanel'
 const MOCK_GREETING = 'Hello! Test greeting.'
 const MOCK_RESPONSE = 'This is a mock response.'
 
-vi.mock('@/mocks/conversationEngine', () => ({
+vi.mock('@/mocks/conversation', () => ({
   getInitialGreeting: vi.fn(() => MOCK_GREETING),
-  getMockResponse: vi.fn(() => Promise.resolve(MOCK_RESPONSE)),
+  getResponse: vi.fn(() => Promise.resolve(MOCK_RESPONSE)),
 }))
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -178,8 +178,8 @@ describe('ChatPanel', () => {
 
   it('typing indicator appears immediately after submitting a message', async () => {
     // Use a never-resolving promise to freeze the engine mid-flight.
-    const { getMockResponse } = await import('@/mocks/conversationEngine')
-    vi.mocked(getMockResponse).mockReturnValueOnce(new Promise(() => {}))
+    const { getResponse } = await import('@/mocks/conversation')
+    vi.mocked(getResponse).mockReturnValueOnce(new Promise(() => {}))
 
     const { getByLabelText, getByTestId } = renderPanel()
 
