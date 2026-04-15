@@ -24,7 +24,7 @@ const speakMock = vi.fn((utterance: MockUtterance) => {
 const cancelMock = vi.fn()
 const pauseMock = vi.fn()
 const resumeMock = vi.fn()
-const getVoicesMock = vi.fn<[], SpeechSynthesisVoice[]>(() => [])
+const getVoicesMock = vi.fn<() => SpeechSynthesisVoice[]>(() => [])
 
 /** Minimal SpeechSynthesisUtterance stand-in */
 class MockUtterance {
