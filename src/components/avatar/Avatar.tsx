@@ -15,7 +15,8 @@
  *   <Avatar isSpeaking={isTalking} />
  */
 
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
+import { useTransitionClass } from '../../hooks/useTransitionClass'
 import AvatarIllustration from './AvatarIllustration'
 
 export interface AvatarProps {
@@ -25,32 +26,6 @@ export interface AvatarProps {
   className?: string
   /** Screen-reader label for the avatar region. */
   ariaLabel?: string
-}
-
-/**
- * Smooth transition helper: adds/removes the speaking class with a small
- * crossfade delay so state changes never look abrupt.
- */
-function useTransitionClass(
-  isSpeaking: boolean,
-  targetRef: React.RefObject<HTMLDivElement | null>,
-) {
-  const prevRef = useRef(isSpeaking)
-
-  useEffect(() => {
-    if (prevRef.current === isSpeaking) return
-    prevRef.current = isSpeaking
-
-    const el = targetRef.current
-    if (!el) return
-
-    // Mark mid-transition so CSS can apply a brief opacity dip
-    el.classList.add('avatar-transitioning')
-    const tid = setTimeout(() => {
-      el.classList.remove('avatar-transitioning')
-    }, 200)
-    return () => clearTimeout(tid)
-  }, [isSpeaking, targetRef])
 }
 
 export function Avatar({
