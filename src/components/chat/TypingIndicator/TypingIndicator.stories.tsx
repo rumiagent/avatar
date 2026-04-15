@@ -5,7 +5,7 @@
  * within a conversation context.
  */
 
-import { MessageBubble } from './MessageBubble'
+import { MessageBubble } from '../MessageBubble'
 import { TypingIndicator } from './TypingIndicator'
 
 export default {

@@ -29,8 +29,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getInitialGreeting, getResponse } from '@/mocks/conversation'
-import MessageBubble from './MessageBubble'
-import TypingIndicator from './TypingIndicator'
+import { MessageBubble } from '../MessageBubble'
+import { TypingIndicator } from '../TypingIndicator'
 
 /** A single message in the conversation feed. */
 export interface Message {
