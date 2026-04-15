@@ -170,7 +170,6 @@ const KEYWORD_MAP: ReadonlyArray<[string, Intent]> = [
   ['hello', 'greeting'],
   ['hi ', 'greeting'],
   [' hi', 'greeting'],
-  ['^hi$', 'greeting'],
   ['hey', 'greeting'],
   ['good morning', 'greeting'],
   ['good evening', 'greeting'],
