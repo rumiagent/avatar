@@ -2,109 +2,294 @@
  * Unit tests for ChatPanel.
  *
  * Strategy:
- *   - Verify structural regions: divider, message feed, input bar
- *   - Verify speak-toggle button reflects isSpeaking state (aria-pressed, text)
- *   - Verify onToggleSpeaking callback fires on button click
- *   - Verify demo messages are rendered with correct roles
- *   - Verify the message feed has appropriate ARIA log role
- *   - Verify extra className is forwarded to the outer container
+ *   - Mock the conversation engine so async behaviour is deterministic.
+ *   - Verify structural regions: divider, message feed, input bar, send button.
+ *   - Verify initial greeting from the mock engine is rendered on mount.
+ *   - Verify message submission via Enter key and send-button click.
+ *   - Verify typing indicator appears immediately after submission.
+ *   - Verify avatar response appears and onSpeak is called after the engine resolves.
+ *   - Verify the input and send button are disabled while isSpeaking=true.
+ *   - Verify the input and send button are disabled while isTyping (engine pending).
+ *   - Verify empty / whitespace-only messages are rejected.
+ *   - Verify extra className is forwarded to the outer container.
  */
 
-import { render, fireEvent } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
+import { render, fireEvent, waitFor, act } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import ChatPanel from './ChatPanel'
 
+// ── Mock the conversation engine ──────────────────────────────────────────
+const MOCK_GREETING = 'Hello! Test greeting.'
+const MOCK_RESPONSE = 'This is a mock response.'
+
+vi.mock('@/mocks/conversationEngine', () => ({
+  getInitialGreeting: vi.fn(() => MOCK_GREETING),
+  getMockResponse: vi.fn(() => Promise.resolve(MOCK_RESPONSE)),
+}))
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function renderPanel(props: Partial<{ isSpeaking: boolean; onSpeak: (t: string) => void }> = {}) {
+  const onSpeak = props.onSpeak ?? vi.fn()
+  const isSpeaking = props.isSpeaking ?? false
+  return render(<ChatPanel isSpeaking={isSpeaking} onSpeak={onSpeak} />)
+}
+
+// ── Tests ──────────────────────────────────────────────────────────────────
+
 describe('ChatPanel', () => {
-  // ── Structural presence ────────────────────────────────────────────────
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  // ── Structural presence ──────────────────────────────────────────────────
 
   it('renders the outer container with data-testid="chat-panel"', () => {
-    const { getByTestId } = render(<ChatPanel isSpeaking={false} onToggleSpeaking={() => {}} />)
+    const { getByTestId } = renderPanel()
     expect(getByTestId('chat-panel')).toBeTruthy()
   })
 
   it('renders the message feed with role="log"', () => {
-    const { getByRole } = render(<ChatPanel isSpeaking={false} onToggleSpeaking={() => {}} />)
+    const { getByRole } = renderPanel()
     expect(getByRole('log')).toBeTruthy()
   })
 
-  it('renders the text input with accessible label', () => {
-    const { getByLabelText } = render(<ChatPanel isSpeaking={false} onToggleSpeaking={() => {}} />)
+  it('renders the text input with aria-label="Message input"', () => {
+    const { getByLabelText } = renderPanel()
     expect(getByLabelText(/message input/i)).toBeTruthy()
   })
 
-  it('renders the speak-toggle button', () => {
-    const { getByTestId } = render(<ChatPanel isSpeaking={false} onToggleSpeaking={() => {}} />)
-    expect(getByTestId('speak-toggle')).toBeTruthy()
+  it('renders the send button with data-testid="send-button"', () => {
+    const { getByTestId } = renderPanel()
+    expect(getByTestId('send-button')).toBeTruthy()
   })
-
-  // ── Demo messages ──────────────────────────────────────────────────────
-
-  it('renders at least one avatar message bubble', () => {
-    const { getAllByTestId } = render(<ChatPanel isSpeaking={false} onToggleSpeaking={() => {}} />)
-    const bubbles = getAllByTestId('message-bubble')
-    const avatarBubbles = bubbles.filter((b) => b.getAttribute('data-role') === 'avatar')
-    expect(avatarBubbles.length).toBeGreaterThan(0)
-  })
-
-  it('renders at least one user message bubble', () => {
-    const { getAllByTestId } = render(<ChatPanel isSpeaking={false} onToggleSpeaking={() => {}} />)
-    const bubbles = getAllByTestId('message-bubble')
-    const userBubbles = bubbles.filter((b) => b.getAttribute('data-role') === 'user')
-    expect(userBubbles.length).toBeGreaterThan(0)
-  })
-
-  // ── Speak-toggle: idle state ──────────────────────────────────────────
-
-  it('shows "Speak" label when not speaking', () => {
-    const { getByTestId } = render(<ChatPanel isSpeaking={false} onToggleSpeaking={() => {}} />)
-    expect(getByTestId('speak-toggle').textContent).toBe('Speak')
-  })
-
-  it('sets aria-pressed="false" when not speaking', () => {
-    const { getByTestId } = render(<ChatPanel isSpeaking={false} onToggleSpeaking={() => {}} />)
-    expect(getByTestId('speak-toggle').getAttribute('aria-pressed')).toBe('false')
-  })
-
-  // ── Speak-toggle: speaking state ──────────────────────────────────────
-
-  it('shows "Stop" label when speaking', () => {
-    const { getByTestId } = render(<ChatPanel isSpeaking={true} onToggleSpeaking={() => {}} />)
-    expect(getByTestId('speak-toggle').textContent).toBe('Stop')
-  })
-
-  it('sets aria-pressed="true" when speaking', () => {
-    const { getByTestId } = render(<ChatPanel isSpeaking={true} onToggleSpeaking={() => {}} />)
-    expect(getByTestId('speak-toggle').getAttribute('aria-pressed')).toBe('true')
-  })
-
-  it('applies shadow-glow class to the button when speaking', () => {
-    const { getByTestId } = render(<ChatPanel isSpeaking={true} onToggleSpeaking={() => {}} />)
-    expect(getByTestId('speak-toggle').className).toContain('shadow-glow')
-  })
-
-  // ── Interaction ────────────────────────────────────────────────────────
-
-  it('calls onToggleSpeaking when speak-toggle is clicked', () => {
-    const handler = vi.fn()
-    const { getByTestId } = render(<ChatPanel isSpeaking={false} onToggleSpeaking={handler} />)
-    fireEvent.click(getByTestId('speak-toggle'))
-    expect(handler).toHaveBeenCalledTimes(1)
-  })
-
-  it('calls onToggleSpeaking again on second click', () => {
-    const handler = vi.fn()
-    const { getByTestId } = render(<ChatPanel isSpeaking={true} onToggleSpeaking={handler} />)
-    fireEvent.click(getByTestId('speak-toggle'))
-    fireEvent.click(getByTestId('speak-toggle'))
-    expect(handler).toHaveBeenCalledTimes(2)
-  })
-
-  // ── className forwarding ──────────────────────────────────────────────
 
   it('forwards extra className to the outer container', () => {
     const { getByTestId } = render(
-      <ChatPanel isSpeaking={false} onToggleSpeaking={() => {}} className="my-custom-panel" />,
+      <ChatPanel isSpeaking={false} onSpeak={vi.fn()} className="my-custom-panel" />,
     )
     expect(getByTestId('chat-panel').className).toContain('my-custom-panel')
+  })
+
+  // ── Initial greeting ─────────────────────────────────────────────────────
+
+  it('renders the initial greeting on mount', () => {
+    const { getByText } = renderPanel()
+    expect(getByText(MOCK_GREETING)).toBeTruthy()
+  })
+
+  it('initial greeting is rendered as an avatar bubble', () => {
+    const { getAllByTestId } = renderPanel()
+    const avatarBubbles = getAllByTestId('message-bubble').filter(
+      (b) => b.getAttribute('data-role') === 'avatar',
+    )
+    expect(avatarBubbles.length).toBeGreaterThan(0)
+  })
+
+  it('no user bubbles are shown on initial render', () => {
+    const { queryAllByTestId } = renderPanel()
+    const userBubbles = (queryAllByTestId('message-bubble') as HTMLElement[]).filter(
+      (b) => b.getAttribute('data-role') === 'user',
+    )
+    expect(userBubbles.length).toBe(0)
+  })
+
+  // ── Input state ───────────────────────────────────────────────────────────
+
+  it('input is enabled when not speaking and not waiting for response', () => {
+    const { getByLabelText } = renderPanel({ isSpeaking: false })
+    expect((getByLabelText(/message input/i) as HTMLInputElement).disabled).toBe(false)
+  })
+
+  it('input is disabled when isSpeaking=true', () => {
+    const { getByLabelText } = renderPanel({ isSpeaking: true })
+    expect((getByLabelText(/message input/i) as HTMLInputElement).disabled).toBe(true)
+  })
+
+  it('send button is disabled when isSpeaking=true', () => {
+    const { getByTestId } = renderPanel({ isSpeaking: true })
+    expect((getByTestId('send-button') as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('send button is disabled when input is empty', () => {
+    const { getByTestId } = renderPanel()
+    // Input starts empty
+    expect((getByTestId('send-button') as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('send button becomes enabled when user types text', () => {
+    const { getByTestId, getByLabelText } = renderPanel()
+    fireEvent.change(getByLabelText(/message input/i), { target: { value: 'Hello' } })
+    expect((getByTestId('send-button') as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  // ── Message submission ────────────────────────────────────────────────────
+
+  it('appends user message to feed after submitting via Enter', async () => {
+    const { getByLabelText, getByText } = renderPanel()
+    const input = getByLabelText(/message input/i)
+
+    fireEvent.change(input, { target: { value: 'Test message' } })
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' })
+
+    await waitFor(() => {
+      expect(getByText('Test message')).toBeTruthy()
+    })
+  })
+
+  it('appends user message after clicking the send button', async () => {
+    const { getByTestId, getByLabelText, getByText } = renderPanel()
+
+    fireEvent.change(getByLabelText(/message input/i), { target: { value: 'Click send' } })
+    fireEvent.click(getByTestId('send-button'))
+
+    await waitFor(() => {
+      expect(getByText('Click send')).toBeTruthy()
+    })
+  })
+
+  it('clears the input field after submitting', async () => {
+    const { getByLabelText } = renderPanel()
+    const input = getByLabelText(/message input/i) as HTMLInputElement
+
+    fireEvent.change(input, { target: { value: 'Hello' } })
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' })
+
+    await waitFor(() => {
+      expect(input.value).toBe('')
+    })
+  })
+
+  it('user message bubble has data-role="user"', async () => {
+    const { getByLabelText, getAllByTestId } = renderPanel()
+
+    fireEvent.change(getByLabelText(/message input/i), { target: { value: 'Hi' } })
+    fireEvent.keyDown(getByLabelText(/message input/i), { key: 'Enter', code: 'Enter' })
+
+    await waitFor(() => {
+      const userBubbles = getAllByTestId('message-bubble').filter(
+        (b) => b.getAttribute('data-role') === 'user',
+      )
+      expect(userBubbles.length).toBeGreaterThan(0)
+    })
+  })
+
+  // ── Typing indicator ──────────────────────────────────────────────────────
+
+  it('typing indicator appears immediately after submitting a message', async () => {
+    // Use a never-resolving promise to freeze the engine mid-flight.
+    const { getMockResponse } = await import('@/mocks/conversationEngine')
+    vi.mocked(getMockResponse).mockReturnValueOnce(new Promise(() => {}))
+
+    const { getByLabelText, getByTestId } = renderPanel()
+
+    await act(async () => {
+      fireEvent.change(getByLabelText(/message input/i), { target: { value: 'Hello' } })
+      fireEvent.keyDown(getByLabelText(/message input/i), { key: 'Enter', code: 'Enter' })
+    })
+
+    expect(getByTestId('typing-indicator')).toBeTruthy()
+  })
+
+  it('typing indicator disappears once the response arrives', async () => {
+    const { getByLabelText, queryByTestId } = renderPanel()
+
+    fireEvent.change(getByLabelText(/message input/i), { target: { value: 'Hello' } })
+    fireEvent.keyDown(getByLabelText(/message input/i), { key: 'Enter', code: 'Enter' })
+
+    await waitFor(() => {
+      expect(queryByTestId('typing-indicator')).toBeNull()
+    })
+  })
+
+  // ── Avatar response & TTS ─────────────────────────────────────────────────
+
+  it('avatar response is added to the feed after engine resolves', async () => {
+    const { getByLabelText, getByText } = renderPanel()
+
+    fireEvent.change(getByLabelText(/message input/i), { target: { value: 'Hi' } })
+    fireEvent.keyDown(getByLabelText(/message input/i), { key: 'Enter', code: 'Enter' })
+
+    await waitFor(() => {
+      expect(getByText(MOCK_RESPONSE)).toBeTruthy()
+    })
+  })
+
+  it('onSpeak is called with the response text when engine resolves', async () => {
+    const onSpeak = vi.fn()
+    const { getByLabelText } = renderPanel({ onSpeak })
+
+    fireEvent.change(getByLabelText(/message input/i), { target: { value: 'Hi' } })
+    fireEvent.keyDown(getByLabelText(/message input/i), { key: 'Enter', code: 'Enter' })
+
+    await waitFor(() => {
+      expect(onSpeak).toHaveBeenCalledWith(MOCK_RESPONSE)
+    })
+  })
+
+  it('onSpeak is called exactly once per submitted message', async () => {
+    const onSpeak = vi.fn()
+    const { getByLabelText } = renderPanel({ onSpeak })
+
+    fireEvent.change(getByLabelText(/message input/i), { target: { value: 'Hi' } })
+    fireEvent.keyDown(getByLabelText(/message input/i), { key: 'Enter', code: 'Enter' })
+
+    await waitFor(() => {
+      expect(onSpeak).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  // ── Guard: empty / whitespace messages ────────────────────────────────────
+
+  it('does not submit an empty message on Enter', async () => {
+    const onSpeak = vi.fn()
+    const { getByLabelText } = renderPanel({ onSpeak })
+    const input = getByLabelText(/message input/i)
+
+    fireEvent.change(input, { target: { value: '' } })
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' })
+
+    // Give a tick for any async effects.
+    await Promise.resolve()
+    expect(onSpeak).not.toHaveBeenCalled()
+  })
+
+  it('does not submit a whitespace-only message on Enter', async () => {
+    const onSpeak = vi.fn()
+    const { getByLabelText } = renderPanel({ onSpeak })
+    const input = getByLabelText(/message input/i)
+
+    fireEvent.change(input, { target: { value: '   ' } })
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' })
+
+    await Promise.resolve()
+    expect(onSpeak).not.toHaveBeenCalled()
+  })
+
+  it('Shift+Enter does not submit the message', async () => {
+    const onSpeak = vi.fn()
+    const { getByLabelText } = renderPanel({ onSpeak })
+    const input = getByLabelText(/message input/i)
+
+    fireEvent.change(input, { target: { value: 'No submit' } })
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter', shiftKey: true })
+
+    await Promise.resolve()
+    expect(onSpeak).not.toHaveBeenCalled()
+  })
+
+  // ── Input blocked while speaking ──────────────────────────────────────────
+
+  it('does not call onSpeak when submitting while isSpeaking=true', async () => {
+    const onSpeak = vi.fn()
+    const { getByLabelText } = render(
+      <ChatPanel isSpeaking={true} onSpeak={onSpeak} />,
+    )
+    const input = getByLabelText(/message input/i)
+
+    // Input is disabled but fire the event anyway to confirm the guard works.
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' })
+    await Promise.resolve()
+    expect(onSpeak).not.toHaveBeenCalled()
   })
 })

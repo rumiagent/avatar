@@ -196,6 +196,89 @@
     border-color: rgba(167, 139, 250, 0.45);
     box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.12);
   }
+
+  .chat-input:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  /* ─── Typing indicator ─────────────────────────────────────────────── */
+
+  /**
+   * Individual dot in the "avatar is typing" bounce animation.
+   * Three dots in sequence with :nth-child stagger give the illusion
+   * of natural, rhythmic thought.
+   *
+   * The @keyframes is defined here (in @layer components) so it scopes
+   * cleanly alongside the class that references it.
+   */
+  @keyframes dotBounce {
+    0%,
+    60%,
+    100% {
+      transform: translateY(0);
+    }
+    30% {
+      transform: translateY(-6px);
+    }
+  }
+
+  .typing-dot {
+    display: inline-block;
+    height: 6px;
+    width: 6px;
+    border-radius: 9999px;
+    background: rgba(167, 139, 250, 0.7);
+    animation: dotBounce 1.2s ease-in-out infinite;
+  }
+
+  .typing-dot:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  .typing-dot:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+
+  /* ─── Send button ───────────────────────────────────────────────────── */
+
+  /**
+   * Circular icon-send button that sits at the right end of the input row.
+   * Glows subtly on hover; fades out when disabled.
+   */
+  .send-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    height: 2.25rem;
+    width: 2.25rem;
+    border-radius: 9999px;
+    background: rgba(167, 139, 250, 0.12);
+    border: 1px solid rgba(167, 139, 250, 0.25);
+    color: #a78bfa;
+    transition:
+      background var(--ds-transition-fast),
+      box-shadow var(--ds-transition-fast),
+      border-color var(--ds-transition-fast);
+    outline: none;
+    cursor: pointer;
+  }
+
+  .send-button:hover:not(:disabled) {
+    background: rgba(167, 139, 250, 0.22);
+    border-color: rgba(167, 139, 250, 0.45);
+    box-shadow: 0 0 12px 2px rgba(167, 139, 250, 0.25);
+  }
+
+  .send-button:focus-visible {
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.35);
+  }
+
+  .send-button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
 }
 
 /* ── Utility layer ──────────────────────────────────────────────────────── */
