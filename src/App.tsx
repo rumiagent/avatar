@@ -1,35 +1,39 @@
+/**
+ * App – root component and layout shell.
+ *
+ * Layout contract:
+ *   • The viewport is divided exactly 50 / 50 between the avatar panel (top)
+ *     and the chat panel (bottom).  Both panels are always visible with no
+ *     outer-page scrollbar; each panel manages its own internal scroll.
+ *   • Responsive down to 375 px width — no horizontal scroll introduced.
+ *   • `isSpeaking` state is the single source of truth wired to both panels:
+ *       – Avatar panel: triggers speaking animation + glow intensification
+ *       – Chat panel: styles the speak-toggle button
+ */
+
 import { useState } from 'react'
 import Avatar from '@/components/avatar/Avatar'
+import ChatPanel from '@/components/chat/ChatPanel'
 
 function App() {
   const [isSpeaking, setIsSpeaking] = useState(false)
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-950 text-white">
-      {/* Avatar occupies the top 50 vh */}
-      <Avatar isSpeaking={isSpeaking} />
+    /*
+     * Outer shell: full-viewport height, flex-column, overflow-hidden.
+     * `overflow-hidden` prevents any outer-page scrollbar from appearing.
+     * Both child panels are `h-[50vh]` → they equally share the viewport.
+     */
+    <div className="flex h-screen flex-col overflow-hidden bg-surface-base">
+      {/* ── Top 50 %: Avatar panel ── */}
+      <Avatar isSpeaking={isSpeaking} className="h-[50vh] flex-shrink-0" />
 
-      {/* Bottom half — placeholder content / controls */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-8">
-        <p className="text-sm text-gray-400">
-          {isSpeaking ? 'Speaking…' : 'Idle — press the button to simulate speech'}
-        </p>
-
-        <button
-          type="button"
-          onClick={() => setIsSpeaking((s) => !s)}
-          className={[
-            'rounded-full px-8 py-3 text-sm font-semibold tracking-wide',
-            'transition-all duration-300 focus-visible:outline-none focus-visible:ring-2',
-            'focus-visible:ring-glow-primary focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950',
-            isSpeaking
-              ? 'bg-glow-primary text-gray-950 shadow-glow'
-              : 'border border-glow-primary/40 bg-transparent text-glow-primary hover:bg-glow-primary/10',
-          ].join(' ')}
-        >
-          {isSpeaking ? 'Stop speaking' : 'Start speaking'}
-        </button>
-      </div>
+      {/* ── Bottom 50 %: Chat panel ── */}
+      <ChatPanel
+        isSpeaking={isSpeaking}
+        onToggleSpeaking={() => setIsSpeaking((s) => !s)}
+        className="h-[50vh] flex-shrink-0"
+      />
     </div>
   )
 }

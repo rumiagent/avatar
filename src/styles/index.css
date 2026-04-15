@@ -1,12 +1,61 @@
+/*
+ * Design-system global stylesheet
+ *
+ * Load order:
+ *   1. Google Fonts (display: swap for non-blocking render)
+ *   2. Tailwind directives
+ *   3. @layer base  — CSS custom properties + global resets
+ *   4. @layer components — reusable design-system classes
+ *   5. @layer utilities  — low-level overrides (scrollbar hide, vignette)
+ */
+
+/* ── Fonts ─────────────────────────────────────────────────────────────────
+   Playfair Display: elegant serif for headlines / display text
+   Inter: refined geometric sans for body copy and UI controls
+   ──────────────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ── Design-system CSS custom properties ───────────────────────────────── */
 @layer base {
   :root {
     color-scheme: dark;
+
+    /* Surface tokens — deep dark hierarchy */
+    --ds-surface-base: #09090f;
+    --ds-surface-raised: #0f0f18;
+    --ds-surface-overlay: #13131e;
+    --ds-surface-muted: #1b1b28;
+    --ds-surface-border: #252535;
+
+    /* Glow / accent tokens */
+    --ds-glow-primary: #a78bfa;
+    --ds-glow-secondary: #818cf8;
+    --ds-glow-accent: #c4b5fd;
+    --ds-glow-gold: #d4a847;
+
+    /* Typography tokens */
+    --ds-font-display: 'Playfair Display', Georgia, ui-serif, serif;
+    --ds-font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+    /* Spacing base: 4 px */
+    --ds-space-base: 4px;
+
+    /* Border-radius tokens */
+    --ds-radius-bubble: 1.25rem;
+    --ds-radius-card: 1rem;
+    --ds-radius-pill: 9999px;
+
+    /* Transition presets */
+    --ds-transition-fast: 150ms ease;
+    --ds-transition-base: 300ms ease;
+    --ds-transition-slow: 500ms ease;
   }
 
+  /* ── Global resets ── */
   *,
   *::before,
   *::after {
@@ -17,30 +66,158 @@
   body {
     margin: 0;
     padding: 0;
-    min-height: 100dvh;
-    font-family:
-      ui-sans-serif,
-      system-ui,
-      -apple-system,
-      sans-serif;
+    height: 100%;
+    /* No outer-page scrollbars — each panel manages its own scroll */
+    overflow: hidden;
+    font-family: var(--ds-font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    background: var(--ds-surface-base);
+    color: #fff;
+  }
+
+  /* Minimum supported viewport width */
+  html {
+    min-width: 375px;
   }
 
   #root {
-    min-height: 100dvh;
+    height: 100%;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Base typography ── */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--ds-font-display);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+
+  p {
+    margin: 0;
+    line-height: 1.6;
   }
 }
 
+/* ── Component layer: reusable design-system classes ───────────────────── */
 @layer components {
-  /* Reusable glow ring for the avatar / interactive elements */
+  /* ─── Glow rings ────────────────────────────────────────────────────── */
+
+  /** Subtle glow ring — hover / focus affordance */
   .glow-ring {
     @apply shadow-glow ring-2 ring-glow-primary/40;
   }
 
+  /** Stronger glow ring — active / speaking states */
   .glow-ring-lg {
     @apply shadow-glow-lg ring-4 ring-glow-primary/50;
+  }
+
+  /* ─── Message bubbles ───────────────────────────────────────────────── */
+
+  /**
+   * Avatar-side bubble: lavender-tinted glow, left-aligned
+   * Visually distinct from user bubbles via colour temperature.
+   */
+  .bubble-avatar {
+    border-radius: var(--ds-radius-bubble) var(--ds-radius-bubble) var(--ds-radius-bubble) 0.25rem;
+    background: var(--ds-surface-overlay);
+    border: 1px solid rgba(167, 139, 250, 0.15);
+    @apply shadow-bubble-avatar transition-shadow duration-300;
+  }
+
+  .bubble-avatar:hover {
+    @apply shadow-glow;
+  }
+
+  /**
+   * User-side bubble: warm-gold glow, right-aligned
+   * Warmer colour temperature differentiates user turns at a glance.
+   */
+  .bubble-user {
+    border-radius: var(--ds-radius-bubble) var(--ds-radius-bubble) 0.25rem var(--ds-radius-bubble);
+    background: var(--ds-surface-muted);
+    border: 1px solid rgba(212, 168, 71, 0.12);
+    @apply shadow-bubble-user transition-shadow duration-300;
+  }
+
+  .bubble-user:hover {
+    @apply shadow-glow-gold;
+  }
+
+  /* ─── Panel divider ─────────────────────────────────────────────────── */
+
+  /**
+   * Glowing hairline that separates the avatar panel from the chat panel.
+   * Uses a gradient-line technique so the glow feels organic.
+   */
+  .panel-divider {
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      rgba(167, 139, 250, 0.35) 30%,
+      rgba(196, 181, 253, 0.55) 50%,
+      rgba(167, 139, 250, 0.35) 70%,
+      transparent 100%
+    );
+    box-shadow: 0 0 12px 2px rgba(167, 139, 250, 0.2);
+    flex-shrink: 0;
+  }
+
+  /* ─── Input bar ─────────────────────────────────────────────────────── */
+
+  /** Styled text-input for the chat bar */
+  .chat-input {
+    flex: 1;
+    background: var(--ds-surface-overlay);
+    color: #fff;
+    border: 1px solid var(--ds-surface-border);
+    border-radius: var(--ds-radius-pill);
+    padding: 0.5rem 1rem;
+    font-family: var(--ds-font-body);
+    font-size: 0.875rem;
+    outline: none;
+    transition:
+      border-color var(--ds-transition-base),
+      box-shadow var(--ds-transition-base);
+  }
+
+  .chat-input::placeholder {
+    color: rgba(255, 255, 255, 0.28);
+  }
+
+  .chat-input:focus {
+    border-color: rgba(167, 139, 250, 0.45);
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.12);
+  }
+}
+
+/* ── Utility layer ──────────────────────────────────────────────────────── */
+@layer utilities {
+  /* Hide scrollbars while keeping scroll functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Background vignette — darkens corners for depth and focus */
+  .vignette {
+    background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.45) 100%);
+    pointer-events: none;
+  }
+
+  /* Inset glow — inner ambient light on dark panels */
+  .inner-glow {
+    box-shadow: inset 0 0 40px rgba(167, 139, 250, 0.06);
   }
 }
