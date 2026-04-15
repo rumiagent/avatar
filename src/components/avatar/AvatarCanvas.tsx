@@ -34,26 +34,15 @@ export interface AvatarCanvasProps {
 }
 
 const AvatarCanvas = forwardRef<AvatarHandle, AvatarCanvasProps>(
-  (
-    { src, stateMachine, className = '', ariaLabel = 'Animated avatar' },
-    ref,
-  ) => {
+  ({ src, stateMachine, className = '', ariaLabel = 'Animated avatar' }, ref) => {
     const { rive, RiveComponent } = useRive({
       src,
       stateMachines: stateMachine,
       autoplay: true,
     })
 
-    const isSpeakingInput = useStateMachineInput(
-      rive,
-      stateMachine,
-      'isSpeaking',
-    )
-    const mouthOpenInput = useStateMachineInput(
-      rive,
-      stateMachine,
-      'mouthOpen',
-    )
+    const isSpeakingInput = useStateMachineInput(rive, stateMachine, 'isSpeaking')
+    const mouthOpenInput = useStateMachineInput(rive, stateMachine, 'mouthOpen')
 
     useImperativeHandle(ref, () => ({
       setIsSpeaking(value: boolean) {
@@ -69,11 +58,7 @@ const AvatarCanvas = forwardRef<AvatarHandle, AvatarCanvasProps>(
     }))
 
     return (
-      <div
-        className={`relative overflow-hidden ${className}`}
-        role="img"
-        aria-label={ariaLabel}
-      >
+      <div className={`relative overflow-hidden ${className}`} role="img" aria-label={ariaLabel}>
         <RiveComponent />
       </div>
     )

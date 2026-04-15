@@ -18,6 +18,11 @@ export default {
       animation: {
         'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
         'fade-in': 'fadeIn 0.3s ease-in',
+        breathe: 'breathe 4s ease-in-out infinite',
+        blink: 'blink 4s ease-in-out infinite',
+        'hair-sway': 'hairSway 6s ease-in-out infinite',
+        'mouth-speak': 'mouthSpeak 0.22s ease-in-out infinite alternate',
+        'ambient-pulse': 'ambientPulse 3s ease-in-out infinite',
       },
       keyframes: {
         pulseGlow: {
@@ -27,6 +32,26 @@ export default {
         fadeIn: {
           from: { opacity: '0', transform: 'translateY(4px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        breathe: {
+          '0%, 100%': { transform: 'translateY(0) scaleY(1)' },
+          '50%': { transform: 'translateY(-4px) scaleY(1.012)' },
+        },
+        blink: {
+          '0%, 88%, 94%, 100%': { transform: 'scaleY(1)' },
+          '91%': { transform: 'scaleY(0.08)' },
+        },
+        hairSway: {
+          '0%, 100%': { transform: 'rotate(-1deg) translateX(0)' },
+          '50%': { transform: 'rotate(1deg) translateX(2px)' },
+        },
+        mouthSpeak: {
+          '0%': { transform: 'scaleY(0.4)' },
+          '100%': { transform: 'scaleY(1)' },
+        },
+        ambientPulse: {
+          '0%, 100%': { opacity: '0.5', r: '180' },
+          '50%': { opacity: '0.8', r: '200' },
         },
       },
     },
