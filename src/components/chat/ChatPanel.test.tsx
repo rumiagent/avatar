@@ -2,7 +2,8 @@
  * Unit tests for ChatPanel.
  *
  * Strategy:
- *   - Mock the intent-aware conversation engine so async behaviour is deterministic.
+ *   - Inject mock side effects via ContextSideEffectsProvider so async
+ *     behaviour is deterministic — no module-level vi.mock needed.
  *   - Verify structural regions: divider, message feed, input bar, send button.
  *   - Verify initial greeting from the mock engine is rendered on mount.
  *   - Verify message submission via Enter key and send-button click.
@@ -16,23 +17,44 @@
 
 import { render, fireEvent, waitFor, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { type ReactNode } from 'react'
+import { ContextSideEffectsProvider, type SideEffects } from '@/contexts/ContextSideEffects'
 import ChatPanel from './ChatPanel'
 
-// ── Mock the conversation engine ──────────────────────────────────────────
+// ── Mock side-effect values ─────────────────────────────────────────────────
 const MOCK_GREETING = 'Hello! Test greeting.'
 const MOCK_RESPONSE = 'This is a mock response.'
 
-vi.mock('@/mocks/conversation', () => ({
-  getInitialGreeting: vi.fn(() => MOCK_GREETING),
-  getResponse: vi.fn(() => Promise.resolve(MOCK_RESPONSE)),
-}))
+/** Default mock side effects used by most tests. */
+function createMockSideEffects(overrides: Partial<SideEffects> = {}): SideEffects {
+  return {
+    getInitialGreeting: () => MOCK_GREETING,
+    getResponse: () => Promise.resolve(MOCK_RESPONSE),
+    ...overrides,
+  }
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function renderPanel(props: Partial<{ isSpeaking: boolean; onSpeak: (t: string) => void }> = {}) {
+function Wrapper({ children, sideEffects }: { children: ReactNode; sideEffects?: Partial<SideEffects> }) {
+  return (
+    <ContextSideEffectsProvider value={createMockSideEffects(sideEffects)}>
+      {children}
+    </ContextSideEffectsProvider>
+  )
+}
+
+function renderPanel(
+  props: Partial<{ isSpeaking: boolean; onSpeak: (t: string) => void }> = {},
+  sideEffects?: Partial<SideEffects>,
+) {
   const onSpeak = props.onSpeak ?? vi.fn()
   const isSpeaking = props.isSpeaking ?? false
-  return render(<ChatPanel isSpeaking={isSpeaking} onSpeak={onSpeak} />)
+  return render(
+    <Wrapper sideEffects={sideEffects}>
+      <ChatPanel isSpeaking={isSpeaking} onSpeak={onSpeak} />
+    </Wrapper>,
+  )
 }
 
 // ── Tests ──────────────────────────────────────────────────────────────────
@@ -66,7 +88,9 @@ describe('ChatPanel', () => {
 
   it('forwards extra className to the outer container', () => {
     const { getByTestId } = render(
-      <ChatPanel isSpeaking={false} onSpeak={vi.fn()} className="my-custom-panel" />,
+      <Wrapper>
+        <ChatPanel isSpeaking={false} onSpeak={vi.fn()} className="my-custom-panel" />
+      </Wrapper>,
     )
     expect(getByTestId('chat-panel').className).toContain('my-custom-panel')
   })
@@ -178,10 +202,10 @@ describe('ChatPanel', () => {
 
   it('typing indicator appears immediately after submitting a message', async () => {
     // Use a never-resolving promise to freeze the engine mid-flight.
-    const { getResponse } = await import('@/mocks/conversation')
-    vi.mocked(getResponse).mockReturnValueOnce(new Promise(() => {}))
-
-    const { getByLabelText, getByTestId } = renderPanel()
+    const { getByLabelText, getByTestId } = renderPanel(
+      {},
+      { getResponse: () => new Promise(() => {}) },
+    )
 
     await act(async () => {
       fireEvent.change(getByLabelText(/message input/i), { target: { value: 'Hello' } })
@@ -283,7 +307,9 @@ describe('ChatPanel', () => {
   it('does not call onSpeak when submitting while isSpeaking=true', async () => {
     const onSpeak = vi.fn()
     const { getByLabelText } = render(
-      <ChatPanel isSpeaking={true} onSpeak={onSpeak} />,
+      <Wrapper>
+        <ChatPanel isSpeaking={true} onSpeak={onSpeak} />
+      </Wrapper>,
     )
     const input = getByLabelText(/message input/i)
 
