@@ -2,65 +2,127 @@
  * ChatPanel – the bottom 50 vh of the app layout.
  *
  * Divided into three stacked regions:
- *   1. Panel divider — a glowing hairline separating avatar from chat
- *   2. Message feed  — scrollable list of MessageBubbles
- *   3. Input bar     — sticky-to-bottom compose area + speak-toggle button
+ *   1. Panel divider — glowing hairline separating avatar from chat
+ *   2. Message feed  — scrollable list of MessageBubbles (+ typing indicator)
+ *   3. Input bar     — compose area with send button
  *
- * The panel has `overflow-hidden` on its outer shell; only the message feed
- * (`overflow-y-auto scrollbar-hide`) scrolls independently.  This matches the
- * layout requirement: no outer-page scrollbar, each panel scrolls on its own.
+ * Behaviour
+ * ---------
+ * • User types in the input and presses Enter or the send button.
+ * • The message is appended to the feed; a typing indicator appears.
+ * • The mock conversation engine resolves with a response (~0.8 – 2 s).
+ * • The response is added to the feed and `onSpeak` is called so TTS begins.
+ * • The input is disabled while the avatar is speaking (`isSpeaking=true`)
+ *   or while a response is being awaited (`isTyping=true`).
+ * • The feed auto-scrolls to the latest entry on every state change.
  *
- * Design:
- *   • Deep dark background with a subtle inner glow
- *   • Lavender hairline divider between avatar and chat
- *   • Avatar bubbles: lavender glow  |  User bubbles: gold glow
- *   • Input bar uses a frosted-dark pill, focus ring uses glow-primary colour
- *   • Speak toggle animates to a filled lavender pill when active
- *
- * This is a presentational placeholder — real conversation logic lives in
- * issue #6 (chat interface) and #7 (conversation engine).
+ * No backend calls — all data flows through the mock engine
+ * (`src/mocks/conversationEngine.ts`).
  *
  * @example
  *   <ChatPanel
  *     isSpeaking={isSpeaking}
- *     onToggleSpeaking={() => setIsSpeaking(s => !s)}
+ *     onSpeak={speak}
+ *     className="h-[50vh] flex-shrink-0"
  *   />
  */
 
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { getInitialGreeting, getMockResponse } from '@/mocks/conversationEngine'
 import MessageBubble from './MessageBubble'
+import TypingIndicator from './TypingIndicator'
 
-/** Demonstration messages shown while the real conversation engine is pending. */
-const DEMO_MESSAGES = [
-  { id: 1, role: 'avatar' as const, text: "Hello! I'm here whenever you're ready to talk." },
-  { id: 2, role: 'user' as const, text: 'Tell me a little about yourself.' },
-  {
-    id: 3,
-    role: 'avatar' as const,
-    text: "I'm your AI companion — calm, attentive, and always present. What's on your mind?",
-  },
-  { id: 4, role: 'user' as const, text: "I'd love to hear something uplifting." },
-  {
-    id: 5,
-    role: 'avatar' as const,
-    text: "Every conversation is a small light. I'm glad we have this one.",
-  },
-]
+/** A single message in the conversation feed. */
+export interface Message {
+  id: number
+  role: 'avatar' | 'user'
+  text: string
+}
 
 export interface ChatPanelProps {
-  /** Reflects the current speaking state — styles the speak-toggle button. */
+  /** True while TTS is playing — disables the input and send button. */
   isSpeaking: boolean
-  /** Called when the user presses the speak-toggle button. */
-  onToggleSpeaking: () => void
+  /**
+   * Called with the avatar's response text so the parent can trigger TTS.
+   * Intentionally separate from message-state management: the chat panel owns
+   * the conversation, the parent owns audio playback.
+   */
+  onSpeak: (text: string) => void
   /** Optional extra classes for the outer container. */
   className?: string
 }
 
-export function ChatPanel({ isSpeaking, onToggleSpeaking, className = '' }: ChatPanelProps) {
+/** Auto-incrementing message ID (module-level so it survives re-renders). */
+let _nextId = 1
+function nextId(): number {
+  return _nextId++
+}
+
+export function ChatPanel({ isSpeaking, onSpeak, className = '' }: ChatPanelProps) {
+  const [messages, setMessages] = useState<Message[]>(() => [
+    { id: nextId(), role: 'avatar', text: getInitialGreeting() },
+  ])
+  const [inputValue, setInputValue] = useState('')
+  const [isTyping, setIsTyping] = useState(false)
+
+  /** Ref to the scrollable feed container for programmatic scrolling. */
+  const feedRef = useRef<HTMLDivElement>(null)
+
+  /** Scroll the feed to the very bottom. */
+  const scrollToBottom = useCallback(() => {
+    if (feedRef.current) {
+      feedRef.current.scrollTop = feedRef.current.scrollHeight
+    }
+  }, [])
+
+  // Auto-scroll whenever the message list or typing-indicator state changes.
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages, isTyping, scrollToBottom])
+
+  /** True when the user must wait before sending another message. */
+  const isBlocked = isSpeaking || isTyping
+
+  /** Submit handler — fires on Enter key press and send-button click. */
+  const handleSubmit = useCallback(async () => {
+    const text = inputValue.trim()
+    if (!text || isBlocked) return
+
+    // 1. Show user message immediately.
+    setInputValue('')
+    setMessages((prev) => [...prev, { id: nextId(), role: 'user', text }])
+
+    // 2. Show typing indicator while the mock engine "thinks".
+    setIsTyping(true)
+
+    try {
+      const response = await getMockResponse(text)
+
+      // 3. Append avatar response.
+      setMessages((prev) => [...prev, { id: nextId(), role: 'avatar', text: response }])
+
+      // 4. Trigger TTS for the response.
+      onSpeak(response)
+    } finally {
+      setIsTyping(false)
+    }
+  }, [inputValue, isBlocked, onSpeak])
+
+  /** Handle Enter key in the text input (Shift+Enter is a passthrough). */
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
+        void handleSubmit()
+      }
+    },
+    [handleSubmit],
+  )
+
   return (
     <div
       data-testid="chat-panel"
       className={[
-        // Layout: column flex, inner-glow, no outer scroll
         'relative flex flex-col overflow-hidden',
         'bg-gradient-to-b from-[#0f0f1c] to-surface-base',
         'inner-glow',
@@ -74,14 +136,18 @@ export function ChatPanel({ isSpeaking, onToggleSpeaking, className = '' }: Chat
 
       {/* ── 2. Message feed — scrollable ── */}
       <div
+        ref={feedRef}
         role="log"
         aria-label="Conversation"
         aria-live="polite"
         className="scrollbar-hide flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-4"
       >
-        {DEMO_MESSAGES.map((msg) => (
+        {messages.map((msg) => (
           <MessageBubble key={msg.id} role={msg.role} text={msg.text} />
         ))}
+
+        {/* Typing indicator — visible while mock engine is responding */}
+        {isTyping && <TypingIndicator />}
       </div>
 
       {/* ── 3. Input bar — sticky at bottom ── */}
@@ -89,37 +155,45 @@ export function ChatPanel({ isSpeaking, onToggleSpeaking, className = '' }: Chat
         className={[
           'shrink-0 border-t px-4 py-3',
           'border-surface-border/60',
-          // Subtle upward gradient so the input bar reads as "grounded"
           'bg-gradient-to-t from-surface-base to-transparent',
         ].join(' ')}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {/* Text input */}
           <input
             type="text"
-            placeholder="Type a message…"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Say something…"
             aria-label="Message input"
+            disabled={isBlocked}
             className="chat-input"
           />
 
-          {/* Speak toggle */}
+          {/* Send button */}
           <button
             type="button"
-            data-testid="speak-toggle"
-            onClick={onToggleSpeaking}
-            aria-pressed={isSpeaking}
-            aria-label={isSpeaking ? 'Stop speaking' : 'Start speaking'}
-            className={[
-              'shrink-0 rounded-full px-5 py-2 text-sm font-medium tracking-wide',
-              'transition-all duration-300',
-              'focus-visible:outline-none focus-visible:ring-2',
-              'focus-visible:ring-glow-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base',
-              isSpeaking
-                ? 'bg-glow-primary text-surface-base shadow-glow'
-                : 'border border-glow-primary/40 text-glow-primary hover:bg-glow-primary/10',
-            ].join(' ')}
+            data-testid="send-button"
+            onClick={() => void handleSubmit()}
+            disabled={isBlocked || !inputValue.trim()}
+            aria-label="Send message"
+            className="send-button"
           >
-            {isSpeaking ? 'Stop' : 'Speak'}
+            {/* Arrow-right icon */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z"
+                clipRule="evenodd"
+              />
+            </svg>
           </button>
         </div>
       </div>
