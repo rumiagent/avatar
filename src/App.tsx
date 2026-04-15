@@ -22,23 +22,41 @@
 
 import Avatar from '@/components/avatar/Avatar'
 import ChatPanel from '@/components/chat/ChatPanel'
+import { BackgroundLayer } from '@/components/environment/BackgroundLayer'
+import { EnvironmentSwitcher } from '@/components/environment/EnvironmentSwitcher'
+import { useEnvironment } from '@/hooks/useEnvironment'
 import { useTTS } from '@/hooks/useTTS'
 
 function App() {
   const { speak, isSpeaking } = useTTS()
+  const { environment, setEnvironmentId } = useEnvironment()
 
   return (
     /*
      * Outer shell: full-viewport height, flex-column, overflow-hidden.
      * `overflow-hidden` prevents any outer-page scrollbar from appearing.
      * Both child panels are `h-[50vh]` → they equally share the viewport.
+     *
+     * The background is rendered by <BackgroundLayer> as a fixed underlay
+     * with a vignette overlay.  The environment switcher floats in the
+     * top-right corner above everything else.
      */
-    <div className="flex h-screen flex-col overflow-hidden bg-surface-base">
+    <div className="relative flex h-screen flex-col overflow-hidden bg-surface-base">
+      {/* ── Background environment layer ── */}
+      <BackgroundLayer environment={environment} />
+
+      {/* ── Environment switcher (top-right corner) ── */}
+      <EnvironmentSwitcher activeId={environment.id} onSelect={setEnvironmentId} />
+
       {/* ── Top 50 %: Avatar panel ── */}
-      <Avatar isSpeaking={isSpeaking} className="h-[50vh] flex-shrink-0" />
+      <Avatar isSpeaking={isSpeaking} className="relative z-10 h-[50vh] flex-shrink-0" />
 
       {/* ── Bottom 50 %: Chat panel ── */}
-      <ChatPanel isSpeaking={isSpeaking} onSpeak={speak} className="h-[50vh] flex-shrink-0" />
+      <ChatPanel
+        isSpeaking={isSpeaking}
+        onSpeak={speak}
+        className="relative z-10 h-[50vh] flex-shrink-0"
+      />
     </div>
   )
 }
