@@ -15,7 +15,7 @@
 
 import { useState } from 'react'
 
-import { ContextSideEffectsProvider, defaultSideEffects } from '@/contexts/ContextSideEffects'
+import { ContextSideEffectsProvider } from '@/contexts/ContextSideEffects'
 import { getInitialGreetingMock } from '@/sideEffects/getInitialGreeting.mock'
 import { getResponseMock } from '@/sideEffects/getResponse.mock'
 
@@ -117,7 +117,7 @@ export const Interactive = () => {
 
 /** Full-height variant — verifies layout at different container sizes. */
 export const FullHeight = () => (
-  <ContextSideEffectsProvider value={defaultSideEffects}>
+  <ContextSideEffectsProvider value={{ getInitialGreeting: getInitialGreetingMock, getResponse: getResponseMock }}>
     <ChatPanel
       isSpeaking={false}
       onSpeak={() => {}}
