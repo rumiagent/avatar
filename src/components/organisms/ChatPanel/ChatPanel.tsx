@@ -105,6 +105,12 @@ export function ChatPanel({ isSpeaking, onSpeak, className = '' }: ChatPanelProp
 
       // 4. Trigger TTS for the response.
       onSpeak(response)
+    } catch {
+      // 3a. Show error feedback so the user knows the message was not answered.
+      setMessages((prev) => [
+        ...prev,
+        { id: nextId(), role: 'avatar', text: 'Sorry, something went wrong. Please try again.' },
+      ])
     } finally {
       setIsTyping(false)
     }
