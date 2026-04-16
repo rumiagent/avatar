@@ -311,6 +311,52 @@ describe('ChatPanel', () => {
     expect(onSpeak).not.toHaveBeenCalled()
   })
 
+  // ── Error handling ───────────────────────────────────────────────────────
+
+  it('shows error message bubble when getResponse rejects', async () => {
+    const { getByLabelText, getByText } = renderPanel(
+      {},
+      { getResponse: () => Promise.reject(new Error('Network failure')) },
+    )
+
+    fireEvent.change(getByLabelText(/message input/i), { target: { value: 'Hi' } })
+    fireEvent.keyDown(getByLabelText(/message input/i), { key: 'Enter', code: 'Enter' })
+
+    await waitFor(() => {
+      expect(getByText('Sorry, something went wrong. Please try again.')).toBeTruthy()
+    })
+  })
+
+  it('typing indicator disappears after getResponse error', async () => {
+    const { getByLabelText, queryByTestId } = renderPanel(
+      {},
+      { getResponse: () => Promise.reject(new Error('fail')) },
+    )
+
+    fireEvent.change(getByLabelText(/message input/i), { target: { value: 'Hi' } })
+    fireEvent.keyDown(getByLabelText(/message input/i), { key: 'Enter', code: 'Enter' })
+
+    await waitFor(() => {
+      expect(queryByTestId('typing-indicator')).toBeNull()
+    })
+  })
+
+  it('does not call onSpeak when getResponse rejects', async () => {
+    const onSpeak = vi.fn()
+    const { getByLabelText } = renderPanel(
+      { onSpeak },
+      { getResponse: () => Promise.reject(new Error('fail')) },
+    )
+
+    fireEvent.change(getByLabelText(/message input/i), { target: { value: 'Hi' } })
+    fireEvent.keyDown(getByLabelText(/message input/i), { key: 'Enter', code: 'Enter' })
+
+    // Wait for the error message to appear, then verify onSpeak was never called.
+    await waitFor(() => {
+      expect(onSpeak).not.toHaveBeenCalled()
+    })
+  })
+
   // ── Input blocked while speaking ──────────────────────────────────────────
 
   it('does not call onSpeak when submitting while isSpeaking=true', async () => {
