@@ -2,11 +2,14 @@
  * Production implementation of getResponse.
  *
  * TODO: Replace with a real API call when a backend is available.
- * For now, delegates to the mock conversation engine.
  */
 import type { GetResponse } from './getResponse'
-import { getResponse as getResponseFromEngine } from '@/mocks/conversation'
 
-export const getResponseProd: GetResponse = (userMessage: string): Promise<string> => {
-  return getResponseFromEngine(userMessage)
+export const getResponseProd: GetResponse = async (
+  _userMessage: string,
+): Promise<string> => {
+  // TODO: replace with real API call to send the user message and receive a response
+  throw new Error(
+    'getResponseProd is not implemented. Provide a real API integration or use the mock via ContextSideEffects.',
+  )
 }
