@@ -8,7 +8,7 @@
  * No external assets are required — the character is entirely vector-based.
  */
 
-interface AvatarIllustrationProps {
+export interface AvatarIllustrationProps {
   isSpeaking: boolean
   className?: string
 }

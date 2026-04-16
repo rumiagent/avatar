@@ -10,7 +10,7 @@ import { useState } from 'react'
 import { AvatarIllustration } from './AvatarIllustration'
 
 export default {
-  title: 'Organisms/AvatarIllustration',
+  title: 'Atoms/AvatarIllustration',
   component: AvatarIllustration,
   decorators: [
     (Story: React.FC) => (

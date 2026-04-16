@@ -16,8 +16,8 @@
  */
 
 import { useRef } from 'react'
-import { useTransitionClass } from '../../hooks/useTransitionClass'
-import AvatarIllustration from './AvatarIllustration'
+import { useTransitionClass } from '@/hooks/useTransitionClass'
+import AvatarIllustration from '@/components/atoms/AvatarIllustration'
 
 export interface AvatarProps {
   /** When true, the speaking animation plays; idle otherwise. */
