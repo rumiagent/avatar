@@ -12,7 +12,7 @@ import {
   DEFAULT_ENVIRONMENT_ID,
   getEnvironmentById,
   type Environment,
-} from '@/components/environment/environments'
+} from '@/data/environments'
 
 const STORAGE_KEY = 'avatar-environment'
 

@@ -11,8 +11,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import type { Environment } from './environments'
-import { environments } from './environments'
+import type { Environment } from '@/data/environments'
+import { environments } from '@/data/environments'
 
 export interface EnvironmentSwitcherProps {
   activeId: string

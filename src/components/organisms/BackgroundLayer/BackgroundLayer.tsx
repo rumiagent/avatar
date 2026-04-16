@@ -13,13 +13,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-import type { Environment } from './environments'
+import type { Environment } from '@/data/environments'
 
 export interface BackgroundLayerProps {
   environment: Environment
 }
 
-const TRANSITION_MS = 600
+export const TRANSITION_MS = 600
 
 export const BackgroundLayer: React.FC<BackgroundLayerProps> = ({ environment }) => {
   /* Track two layers so we can crossfade between them. */
