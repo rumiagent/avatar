@@ -16,7 +16,7 @@ import { describe, it, expect, vi } from 'vitest'
 import Avatar from './Avatar'
 
 // Mock the SVG illustration so tests don't depend on its internals
-vi.mock('./AvatarIllustration', () => ({
+vi.mock('@/components/atoms/AvatarIllustration', () => ({
   default: ({ isSpeaking }: { isSpeaking: boolean }) => (
     <div data-testid="avatar-illustration" data-speaking={isSpeaking} />
   ),

@@ -13,7 +13,7 @@
 import AvatarCanvas from './AvatarCanvas'
 
 export default {
-  title: 'Organisms/AvatarCanvas',
+  title: 'Atoms/AvatarCanvas',
   component: AvatarCanvas,
   decorators: [
     (Story: React.FC) => (

@@ -20,8 +20,8 @@
  *     UI remains functional as a demo.
  */
 
-import Avatar from '@/components/avatar/Avatar'
-import ChatPanel from '@/components/chat/ChatPanel'
+import Avatar from '@/components/organisms/Avatar'
+import ChatPanel from '@/components/organisms/ChatPanel'
 import { BackgroundLayer } from '@/components/environment/BackgroundLayer'
 import { EnvironmentSwitcher } from '@/components/environment/EnvironmentSwitcher'
 import { useEnvironment } from '@/hooks/useEnvironment'

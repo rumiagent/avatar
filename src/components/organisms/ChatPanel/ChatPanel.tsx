@@ -29,8 +29,8 @@
 
 import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { ContextSideEffects } from '@/contexts/ContextSideEffects'
-import MessageBubble from '@/components/chat/MessageBubble'
-import TypingIndicator from '@/components/chat/TypingIndicator'
+import MessageBubble from '@/components/atoms/MessageBubble'
+import TypingIndicator from '@/components/atoms/TypingIndicator'
 
 /** A single message in the conversation feed. */
 export interface Message {
