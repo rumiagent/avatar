@@ -22,8 +22,8 @@
 
 import Avatar from '@/components/organisms/Avatar'
 import ChatPanel from '@/components/organisms/ChatPanel'
-import { BackgroundLayer } from '@/components/environment/BackgroundLayer'
-import { EnvironmentSwitcher } from '@/components/environment/EnvironmentSwitcher'
+import { BackgroundLayer } from '@/components/organisms/BackgroundLayer'
+import { EnvironmentSwitcher } from '@/components/organisms/EnvironmentSwitcher'
 import { useEnvironment } from '@/hooks/useEnvironment'
 import { useTTS } from '@/hooks/useTTS'
 

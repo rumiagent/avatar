@@ -9,7 +9,7 @@
 import { useState } from 'react'
 
 import { BackgroundLayer } from './BackgroundLayer'
-import { environments } from './environments'
+import { environments } from '@/data/environments'
 
 export default {
   title: 'Organisms/BackgroundLayer',
